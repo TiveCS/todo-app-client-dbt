@@ -1,26 +1,34 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import { useEffect, useState } from "react";
+import useTodos from "./hooks/useTodos";
+import { Todo } from "./types";
+import { get, ref } from "firebase/database";
+import { fireDatabase } from "./firebase/instances";
 
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+  const [todos, setTodos] = useState<Todo[]>([]);
+
+  useEffect(() => {
+    const query = ref(fireDatabase, "todos");
+
+    get(query).then((snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+
+        Object.values(data).forEach((value) => {
+          const todo: Todo = value as Todo;
+          setTodos((prev) => [...prev, todo]);
+        });
+      } else {
+        console.log("No data available");
+      }
+    });
+  }, []);
+
+  if (!todos.length) {
+    return <p>Loading...</p>;
+  }
+
+  return <div className="App"></div>;
 }
 
 export default App;
