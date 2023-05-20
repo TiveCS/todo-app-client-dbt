@@ -6,6 +6,7 @@ interface TextFieldProps {
   name: string;
   label?: string;
   limit?: number;
+  required?: boolean;
 }
 
 export default function TextField({
@@ -14,6 +15,7 @@ export default function TextField({
   name,
   label,
   limit = 20,
+  required = true,
 }: TextFieldProps) {
   const [characters, setCharacters] = useState(0);
 
@@ -60,6 +62,7 @@ export default function TextField({
         className="bg-transparent border-b border-gray-500 w-full px-4 py-6 focus:outline-none focus:border-sky-500"
         placeholder={placeholder}
         onChange={handleChange}
+        required={required}
       ></input>
     </div>
   );
