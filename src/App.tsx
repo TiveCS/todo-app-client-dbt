@@ -10,6 +10,7 @@ import { NewTodo, Todo } from "./types";
 function App() {
   const [openModal, toggleOpenModal] = useToggle(false);
   const [loading, setLoading] = useState(false);
+  const [todosLoading, setTodosLoading] = useState(true);
   const [todos, setTodos] = useState<Todo[]>([]);
 
   useEffect(() => {
@@ -33,9 +34,10 @@ function App() {
 
       setTodos(todos);
     });
+    setTodosLoading(false);
   }, []);
 
-  if (!todos.length) {
+  if (todosLoading) {
     return <p>Loading...</p>;
   }
 
@@ -48,8 +50,6 @@ function App() {
     const title = form.title_field.value as string;
     const description = form.description_field.value as string;
 
-    console.log(title, description);
-
     const newTodo: NewTodo = {
       title,
       description,
@@ -58,16 +58,17 @@ function App() {
     const query = ref(fireDatabase, "todos");
 
     setLoading(true);
-    push(query, newTodo)
-      .then((value) => {
-        console.log(value);
+    push(query, {
+      ...newTodo,
+      isCompleted: false,
+    })
+      .then(() => {
+        setLoading(false);
+        toggleOpenModal();
+        form.reset();
       })
       .catch((error) => {
         console.log(error);
-      })
-      .finally(() => {
-        setLoading(false);
-        toggleOpenModal();
       });
   };
 
@@ -82,7 +83,7 @@ function App() {
         onAddTodo={addTodo}
       />
 
-      <TodoListContainer todos={todos} />
+      <TodoListContainer todos={todos} toggleModal={toggleOpenModal} />
     </>
   );
 }

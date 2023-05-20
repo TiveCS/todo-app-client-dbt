@@ -16,8 +16,8 @@ export default function AddTodoModal(props: AddTodoModalProps) {
     <div
       id="add-modal"
       className={`${
-        !props.isOpen ? "hidden" : ""
-      } fixed top-0 left-0 h-screen w-screen bg-slate-800 z-10`}
+        !props.isOpen ? "-translate-y-full" : "translate-y-0"
+      } fixed top-0 left-0 h-screen w-screen bg-slate-900 z-10 transition-transform duration-500 ease-in-out`}
     >
       <CloseModalButton onClick={props.onCloseModal} />
 
