@@ -1,26 +1,37 @@
-import { useEffect, useState } from "react";
-import useTodos from "./hooks/useTodos";
-import { Todo } from "./types";
-import { get, ref } from "firebase/database";
+import { onValue, push, ref } from "firebase/database";
+import React, { useEffect, useState } from "react";
+import AddButton from "./components/AddButton";
+import AddTodoModal from "./components/AddTodoModal";
+import TodoListContainer from "./components/TodoListContainer";
 import { fireDatabase } from "./firebase/instances";
+import useToggle from "./hooks/useToggle";
+import { NewTodo, Todo } from "./types";
 
 function App() {
+  const [openModal, toggleOpenModal] = useToggle(false);
+  const [loading, setLoading] = useState(false);
   const [todos, setTodos] = useState<Todo[]>([]);
 
   useEffect(() => {
     const query = ref(fireDatabase, "todos");
 
-    get(query).then((snapshot) => {
-      if (snapshot.exists()) {
-        const data = snapshot.val();
+    onValue(query, (snapshot) => {
+      const todos: Todo[] = [];
 
-        Object.values(data).forEach((value) => {
-          const todo: Todo = value as Todo;
-          setTodos((prev) => [...prev, todo]);
-        });
-      } else {
-        console.log("No data available");
-      }
+      snapshot.forEach((childSnapshot) => {
+        const val = childSnapshot.val();
+        const key = childSnapshot.key as string;
+        const todo: Todo = {
+          key,
+          title: val.title,
+          description: val.description,
+          isCompleted: val.isCompleted,
+        };
+
+        todos.push(todo);
+      });
+
+      setTodos(todos);
     });
   }, []);
 
@@ -28,7 +39,52 @@ function App() {
     return <p>Loading...</p>;
   }
 
-  return <div className="App"></div>;
+  const addTodo = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const form = event.currentTarget;
+
+    // get the values from the form
+    const title = form.title_field.value as string;
+    const description = form.description_field.value as string;
+
+    console.log(title, description);
+
+    const newTodo: NewTodo = {
+      title,
+      description,
+    };
+
+    const query = ref(fireDatabase, "todos");
+
+    setLoading(true);
+    push(query, newTodo)
+      .then((value) => {
+        console.log(value);
+      })
+      .catch((error) => {
+        console.log(error);
+      })
+      .finally(() => {
+        setLoading(false);
+        toggleOpenModal();
+      });
+  };
+
+  return (
+    <>
+      <AddButton onClick={toggleOpenModal} />
+
+      <AddTodoModal
+        isOpen={openModal}
+        isLoading={loading}
+        onCloseModal={toggleOpenModal}
+        onAddTodo={addTodo}
+      />
+
+      <TodoListContainer todos={todos} />
+    </>
+  );
 }
 
 export default App;
